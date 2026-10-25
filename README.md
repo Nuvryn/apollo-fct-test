@@ -1,6 +1,6 @@
 # apollo-fct-test
 
-正点原子阿波罗 V1（STM32H743IIT6）全功能测试工程，当前阶段为平台抽象层骨架。
+正点原子阿波罗 V1（STM32H743IIT6）全功能测试工程，当前包含平台抽象层骨架和真实 Zephyr 最小启动程序。
 
 ## 抽象层
 
@@ -38,6 +38,20 @@ cmake -G Ninja -DPLATFORM=linux -S . -B build-linux
 cmake --build build-linux -j
 ```
 
-默认导出每个构建目录中的 `compile_commands.json`；`.clangd` 默认使用 `build-zephyr`。产物为 `apollo_osal`、`apollo_hal`、`apollo_support` 三个静态库，不包含可烧录固件。真实 Zephyr 应用后续需要接入 Zephyr 构建系统、板级定义及驱动实现，不能把这些假 SDK 头加入真实固件。
+默认导出每个构建目录中的 `compile_commands.json`；`.clangd` 使用 `build-firmware`。上述骨架模式产物为三个静态库；真实固件模式见下文。
 
 架构约束见 `docs/architecture-spec.md`，其中 Linux 实现、demo 和扩展 support 契约等描述属于模板的完整架构，当前实现范围以本 README 为准。编码与提交规范见 `docs/embedded-c-coding-spec.md` 和 `docs/commit-message-spec.md`。
+## 真实 Zephyr 固件
+
+依赖环境变量 `ZEPHYR_BASE`、`GNUARMEMB_TOOLCHAIN_PATH` 和 `ZEPHYR_TOOLCHAIN_VARIANT=gnuarmemb`，SDK 主机工具由 `ZEPHYR_SDK_INSTALL_DIR` 提供。本机已使用 Zephyr 4.4.2 / ARM GCC 14.3.1 验证。
+
+```powershell
+cmake -G Ninja -DZEPHYR_FIRMWARE=ON -DBOARD=apollo_stm32h743 -S . -B build-firmware
+cmake --build build-firmware -j
+```
+
+此模式通过 Zephyr 构建系统编译 `app/main.c`，不使用假 SDK 头，也暂不链接尚未实现的抽象层骨架。控制台为 USART1 PA9/PA10、115200 波特率；启动时输出一行提示。
+
+`boards/apollo_stm32h743.overlay` 以 `docs/hardware.md` 为准覆盖本机板级定义：DS0=PB1、DS1=PB0；删除 Flash 分区与 `zephyr,code-partition`。`prj.conf` 关闭 MCUboot，应用从内部 Flash `0x08000000` 直接启动，不预留 boot 空间。CAN 和未初始化的外部 SDRAM 暂不启用。其余外设仍需逐项配置和验证。
+
+产物为 `build-firmware/zephyr/zephyr.elf`、`zephyr.hex`、`zephyr.bin`；裸 bin 烧录地址为 `0x08000000`。编译成功尚不代表板端运行验证通过。板级基线目前来自本机 Zephyr 的 `boards/alientek/apollo_stm32h743`，在其他源码安装中构建时也需要该板定义；overlay 仅保存项目差异。

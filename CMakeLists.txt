@@ -1,4 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
+option(ZEPHYR_FIRMWARE "Build real Zephyr firmware instead of skeleton libraries" OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+if(ZEPHYR_FIRMWARE)
+    set(BOARD apollo_stm32h743 CACHE STRING "Zephyr board")
+    find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+    project(apollo_fct_test LANGUAGES C)
+    target_sources(app PRIVATE app/main.c)
+    return()
+endif()
 project(apollo_fct_test LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)

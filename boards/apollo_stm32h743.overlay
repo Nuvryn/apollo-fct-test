@@ -1,0 +1,30 @@
+/* Apollo V1 wiring is defined by docs/hardware.md. */
+/ {
+    chosen {
+        /delete-property/ zephyr,code-partition;
+    };
+};
+
+&flash0 {
+    /delete-node/ partitions;
+};
+
+&red_led {
+    gpios = <&gpiob 1 GPIO_ACTIVE_LOW>;
+    label = "DS0";
+};
+
+&green_led {
+    gpios = <&gpiob 0 GPIO_ACTIVE_LOW>;
+    label = "DS1";
+};
+
+/* External SDRAM needs FMC initialization before it may be used. */
+&sdram2 {
+    status = "disabled";
+};
+
+/* Bring up the console first; enable CAN with its functional test later. */
+&fdcan1 {
+    status = "disabled";
+};
