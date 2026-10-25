@@ -1,11 +1,17 @@
 /**
  * @file main.c
- * @brief Minimal Zephyr boot check over the board's USART1 console.
+ * @brief Start the test worker; Zephyr initializes the serial shell.
  */
 #include <zephyr/sys/printk.h>
+#include "fct/fct.h"
+#include "fct/shell.h"
 
 int main(void)
 {
-    printk("Apollo V1 FCT: direct boot, USART1 PA9/PA10\n");
-    return 0;
+    int result = fct_init(fct_shell_output);
+    if (result != 0)
+    {
+        printk("FCT initialization failed: %d\n", result);
+    }
+    return result;
 }

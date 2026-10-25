@@ -5,7 +5,14 @@ if(ZEPHYR_FIRMWARE)
     set(BOARD apollo_stm32h743 CACHE STRING "Zephyr board")
     find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
     project(apollo_fct_test LANGUAGES C)
-    target_sources(app PRIVATE app/main.c)
+    target_sources(app PRIVATE
+        app/main.c app/fct/fct.c app/fct/basic_tests.c app/fct/shell.c
+        backends/osal/zephyr/osal_runtime.c
+        backends/hal/zephyr/hal_gpio_runtime.c
+        backends/hal/zephyr/hal_i2c_runtime.c
+        backends/support/zephyr/test_fixture.c)
+    target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/app)
+    target_compile_options(app PRIVATE -Wall -Wextra)
     return()
 endif()
 project(apollo_fct_test LANGUAGES C)

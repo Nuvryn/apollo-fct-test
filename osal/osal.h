@@ -60,8 +60,9 @@ int osal_task_create(const osal_task_attr_t *attr);
 /**
  * @brief Delete a task and release its resources.
  *
- * @param[in] task Handle returned by @ref osal_task_create. Passing NULL is
- *                 allowed and is a no-op.
+ * @param[in] task Reserved task handle. The v1 create API does not return a
+ *                 handle. Only NULL is currently supported (a no-op); the
+ *                 Zephyr runtime worker remains allocated until reset.
  *
  * @note Thread context only (M7).
  */
