@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <errno.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,18 +49,18 @@ typedef void *osal_mq_t;
 
 /** Operation succeeded. */
 #define OSAL_OK 0
-/** Invalid parameter (=-EINVAL). */
-#define OSAL_ERR_PARAM (-22)
+/** Invalid parameter. Error numbers follow the target libc. */
+#define OSAL_ERR_PARAM (-EINVAL)
 /** Out of memory (=-ENOMEM). */
-#define OSAL_ERR_NOMEM (-12)
+#define OSAL_ERR_NOMEM (-ENOMEM)
 /** Operation timed out (=-ETIMEDOUT). */
-#define OSAL_ERR_TIMEOUT (-110)
+#define OSAL_ERR_TIMEOUT (-ETIMEDOUT)
 /** Resource busy (=-EBUSY). */
-#define OSAL_ERR_BUSY (-16)
+#define OSAL_ERR_BUSY (-EBUSY)
 /** Resource not available / no such object (=-ENODEV). */
-#define OSAL_ERR_NODEV (-19)
+#define OSAL_ERR_NODEV (-ENODEV)
 /** Operation not supported (=-ENOTSUP). */
-#define OSAL_ERR_NOTSUP (-95)
+#define OSAL_ERR_NOTSUP (-ENOTSUP)
 
 /* ------------------------------------------------------------------------- */
 /* Timeout semantics                                                         */
