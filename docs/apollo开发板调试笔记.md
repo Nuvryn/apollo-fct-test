@@ -35,3 +35,13 @@
 - 新增 fct run lwip 自动项，实际运行 IPv4 UDP 127.0.0.1 软件回环并核对完整载荷；不宣称物理网口通过。
 - 主机测试运行真实 lwIP/sys_arch：41 次 netconn UDP 回环、lwip_ 前缀 UDP socket 收发、收包超时、分配失败、满/空邮箱、NULL 消息、信号量等待、嵌套保护与资源回收。FCT 回归包含网络失败不能标记通过。
 - Zephyr 固件已链接，未烧录验证；主机 OSAL 仅为 pthread 测试夹具，不代表 Linux 生产后端已实现。RNG 时钟、IRQ 临界区和实际调度还需实板确认。
+
+## 2026-10-26：CAN1 首版测试
+
+- 以 hardware.md 为准，overlay 从评估板 PD0/PD1 改为 PA11 RX、PA12 TX，AF9 已与 H743IIT6 pinctrl 核对；P10 选择 CAN，与 USB OTG 数据线互斥。USART1 USB 转串口继续作为管理通道。
+- FDCAN 域时钟显式选择现有 25MHz HSE，clk-divider=1，默认经典 CAN 500kbit/s；该速率是测试默认，不是厂家硬件规定。关闭 CAN FD，开启 RTR 接收以匹配 HAL 帧契约。
+- 内部回环使用 M_CAN LOOPBACK|LISTENONLY 组合，验证标准/扩展帧的 ID、格式、长度及变化载荷，不把结果当作收发器或物理总线通过。
+- 外部 TX/RX 需要显式命令。TX 等待对端 ACK，RX 正常模式参与 ACK，超时/取消均停止控制器并清理过滤器和待发送项；RX 不把同 ID 的另一格式或 RTR 当作匹配数据帧。
+- 新增 HAL 配置/启动/停止与 STOPPED/WARNING 状态；固定异步 TX/RX 上下文，IRQ 回调只更新静态事件，避免使用已经结束的测试栈。排队等待上限 1000ms，FCT 使用 20ms，防止无限排队阻塞停止。
+- 主机 FCT 测试覆盖载荷/格式错误、无 ACK/收包超时、取消、bus-off、队列/过滤器错误、清理失败及参数边界。独立编译实际 HAL 后端，以 Zephyr API shim 测试转换、异步完成、池耗尽回收、部分过滤器回滚及旧 token 拒绝。
+- 固件编译通过，尚未烧录实板。主机模拟不证明真实 IRQ 时序、内部回环、P10 跳线、电平、终端或外部对端通过。完整重编译可见上游 lwIP sockets.c 的条件编译 unused-function 警告，未修改上游源码。

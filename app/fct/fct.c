@@ -21,11 +21,15 @@ static const fct_case_t s_cases[] = {
     {{"led", "Observe DS0/DS1 blinking, then fct confirm pass|fail", true, 30000}, fct_run_led},
     {{"keys", "Release all keys, then press/release WK_UP KEY2 KEY1 KEY0", true, 60000}, fct_run_keys},
     {{"lwip", "lwIP UDP/IPv4 software loopback only; no Ethernet PHY test", false, 3000}, fct_run_lwip},
+    {{"can-loopback", "Classic CAN1 internal loopback, std/ext; no P10/transceiver test", false, 3000}, fct_run_can_loopback},
+    {{"can-tx", "Use fct can tx <bitrate> <std|ext> <id> <hex|->; external ACK required", true, 7000}, fct_run_can_tx},
+    {{"can-rx", "Use fct can rx <bitrate> <std|ext> <id> <wait_ms>; P10 and peer required", true, 7000}, fct_run_can_rx},
 };
 
 static osal_mutex_t s_lock;
 static osal_mq_t s_requests;
 static bool s_initialized;
+static fct_can_request_t s_can_request;
 static bool s_busy;
 static bool s_cancel;
 static bool s_waiting;
@@ -195,11 +199,15 @@ int fct_stop(void)
     return result;
 }
 
-int fct_start(const char *id)
+static int fct_start_request(const char *id, const fct_can_request_t *request)
 {
     int selected = -1;
     int result;
     if (!s_initialized || id == NULL)
+    {
+        return -EINVAL;
+    }
+    if ((strcmp(id, "can-tx") == 0 || strcmp(id, "can-rx") == 0) && request == NULL)
     {
         return -EINVAL;
     }
@@ -227,6 +235,10 @@ int fct_start(const char *id)
     s_busy = true;
     s_cancel = false;
     s_waiting = false;
+    if (request != NULL)
+    {
+        s_can_request = *request;
+    }
     /* Reset only the selected session's results before publishing it. */
     for (size_t idx = 0; idx < fct_count(); idx++)
     {
@@ -244,6 +256,20 @@ int fct_start(const char *id)
     return result;
 }
 
+int fct_start(const char *id)
+{
+    return fct_start_request(id, NULL);
+}
+int fct_start_can(const fct_can_request_t *request)
+{
+    int result = fct_can_validate(request);
+    if (result != 0)
+    {
+        return result;
+    }
+    return fct_start_request(request->operation == FCT_CAN_TX ? "can-tx" : "can-rx", request);
+}
+
 static void fct_execute(size_t index, bool batch)
 {
     fct_context_t context = {.started_ms = osal_get_tick_ms(),
@@ -252,6 +278,7 @@ static void fct_execute(size_t index, bool batch)
     int result;
     fct_lock();
     s_results[index] = outcome;
+    context.can_request = s_can_request;
     fct_unlock();
     result = fct_checkpoint(&context);
     if (result == 0 && batch && s_cases[index].info.interactive)

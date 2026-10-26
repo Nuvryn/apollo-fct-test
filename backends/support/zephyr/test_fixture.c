@@ -39,3 +39,8 @@ const char *support_test_i2c_name(void)
 {
     return DEVICE_DT_NAME(DT_NODELABEL(i2c2));
 }
+
+const char *support_test_can_name(void)
+{
+    return DEVICE_DT_NAME(DT_NODELABEL(fdcan1));
+}

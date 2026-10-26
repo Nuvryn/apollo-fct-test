@@ -19,5 +19,6 @@ typedef struct
 const support_test_pin_t *support_test_leds(size_t *count);
 const support_test_pin_t *support_test_keys(size_t *count);
 const char *support_test_i2c_name(void);
+const char *support_test_can_name(void);
 
 #endif

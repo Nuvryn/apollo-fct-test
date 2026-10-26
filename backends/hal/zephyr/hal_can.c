@@ -76,3 +76,21 @@ int hal_can_get_state(hal_can_bus_t bus, hal_can_state_t *state)
 	s_unimpl_count++;
 	return -ENOSYS;
 }
+/* Offline-only controller lifecycle. */
+int hal_can_configure(hal_can_bus_t bus, uint32_t bitrate, hal_can_mode_t mode)
+{
+    (void) bus;
+    (void) bitrate;
+    (void) mode;
+    return -ENOSYS;
+}
+int hal_can_start(hal_can_bus_t bus)
+{
+    (void) bus;
+    return -ENOSYS;
+}
+int hal_can_stop(hal_can_bus_t bus)
+{
+    (void) bus;
+    return -ENOSYS;
+}

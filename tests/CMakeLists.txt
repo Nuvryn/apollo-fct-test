@@ -3,7 +3,8 @@ project(apollo_fct_host_tests C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_testing()
-add_executable(fct_tests fct_tests.c ../app/fct/fct.c ../app/fct/basic_tests.c)
+add_executable(fct_tests fct_tests.c ../app/fct/fct.c ../app/fct/basic_tests.c
+    ../app/fct/can_test.c ../app/fct/can_args.c)
 target_include_directories(fct_tests PRIVATE .. ../app)
 target_compile_options(fct_tests PRIVATE -Wall -Wextra -Werror -Wpedantic)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
@@ -22,3 +23,8 @@ set_tests_properties(lwip_real_stack_and_sys_arch PROPERTIES TIMEOUT 20)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_test(NAME lwip_vendor_integrity
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_lwip_vendor.py)
+
+add_executable(can_backend_tests can_backend_tests.c ../backends/hal/zephyr/hal_can_runtime.c)
+target_include_directories(can_backend_tests PRIVATE can_shim ..)
+target_compile_options(can_backend_tests PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+add_test(NAME can_backend_translation_and_lifecycle COMMAND can_backend_tests)

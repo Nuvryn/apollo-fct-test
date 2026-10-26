@@ -33,9 +33,15 @@
     status = "disabled";
 };
 
-/* Bring up the console first; enable CAN with its functional test later. */
+/* hardware.md: PA11 RX / PA12 TX, selected by P10 instead of USB. */
 &fdcan1 {
-    status = "disabled";
+    pinctrl-0 = <&fdcan1_rx_pa11 &fdcan1_tx_pa12>;
+    pinctrl-names = "default";
+    clocks = <&rcc STM32_CLOCK(APB1_2, 8)>,
+             <&rcc STM32_SRC_HSE FDCAN_SEL(0)>;
+    clk-divider = <1>;
+    bitrate = <500000>;
+    status = "okay";
 };
 
 /* Verified against stm32h743iitx-pinctrl.dtsi. */

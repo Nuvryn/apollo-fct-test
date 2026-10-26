@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "fct/fct_internal.h"
+#include "fct/can_test.h"
+#include "hal/hal_can.h"
 #include "osal/osal.h"
 #include "hal/hal_dev.h"
 #include "hal/hal_i2c.h"
@@ -37,6 +39,131 @@ static bool s_animate_keys;
 static int s_led_levels[2];
 static unsigned int s_probe_count;
 static bool s_cancel_on_start;
+static int s_can_token;
+static unsigned int s_critical_depth;
+static bool s_can_started;
+static bool s_can_corrupt;
+static bool s_can_drop_tx;
+static bool s_can_drop_rx;
+static uint8_t s_can_external_flags;
+static bool s_can_stop_failure;
+static bool s_can_filter_failure;
+static bool s_can_queue_failure;
+static int s_can_tx_status;
+static hal_can_state_t s_can_error_state = HAL_CAN_STATE_ERROR_ACTIVE;
+static hal_can_mode_t s_can_mode;
+static hal_can_rx_cb_t s_can_receive;
+static void *s_can_receive_arg;
+static hal_can_done_cb_t s_can_pending;
+static void *s_can_pending_arg;
+static hal_can_filter_t s_can_filter;
+static unsigned int s_can_sends;
+uintptr_t osal_critical_enter(void)
+{
+    return s_critical_depth++;
+}
+void osal_critical_exit(uintptr_t key)
+{
+    assert(s_critical_depth == key + 1U);
+    s_critical_depth--;
+}
+const char *support_test_can_name(void)
+{
+    return "can1";
+}
+hal_can_bus_t hal_can_get_bus(const char *name)
+{
+    (void) name;
+    return &s_can_token;
+}
+int hal_can_configure(hal_can_bus_t bus, uint32_t bitrate, hal_can_mode_t mode)
+{
+    assert(bus == &s_can_token && !s_can_started && bitrate >= 10000U);
+    s_can_mode = mode;
+    return 0;
+}
+int hal_can_start(hal_can_bus_t bus)
+{
+    assert(bus == &s_can_token && !s_can_started);
+    s_can_started = true;
+    if (s_can_mode == HAL_CAN_MODE_NORMAL && s_can_receive != NULL && !s_can_drop_rx)
+    {
+        hal_can_msg_t frame = {.id = s_can_filter.id, .flags = s_can_external_flags, .len = 2, .data = {0x12, 0x34}};
+        s_can_receive(s_can_receive_arg, &frame);
+    }
+    return 0;
+}
+int hal_can_stop(hal_can_bus_t bus)
+{
+    assert(bus == &s_can_token);
+    if (s_can_stop_failure && s_can_started)
+    {
+        return -EIO;
+    }
+    s_can_started = false;
+    if (s_can_pending != NULL)
+    {
+        hal_can_done_cb_t callback = s_can_pending;
+        s_can_pending = NULL;
+        callback(s_can_pending_arg, -ENETDOWN);
+    }
+    return 0;
+}
+int hal_can_send(hal_can_bus_t bus, const hal_can_msg_t *message, uint32_t timeout_ms,
+    hal_can_done_cb_t callback, void *argument)
+{
+    assert(bus == &s_can_token && s_can_started && timeout_ms == 20U);
+    s_can_sends++;
+    if (s_can_queue_failure)
+    {
+        return -EBUSY;
+    }
+    if (s_can_mode == HAL_CAN_MODE_INTERNAL_LOOPBACK && s_can_receive != NULL && !s_can_drop_rx)
+    {
+        hal_can_msg_t frame = *message;
+        if (s_can_corrupt)
+        {
+            frame.data[0] ^= 1U;
+        }
+        s_can_receive(s_can_receive_arg, &frame);
+    }
+    if (s_can_drop_tx)
+    {
+        s_can_pending = callback;
+        s_can_pending_arg = argument;
+    }
+    else
+    {
+        callback(argument, s_can_tx_status);
+    }
+    return 0;
+}
+int hal_can_add_rx_filter(hal_can_bus_t bus, const hal_can_filter_t *filter,
+    hal_can_rx_cb_t callback, void *argument)
+{
+    assert(bus == &s_can_token && s_can_receive == NULL);
+    if (s_can_filter_failure)
+    {
+        return -ENOSPC;
+    }
+    s_can_receive = callback;
+    s_can_receive_arg = argument;
+    s_can_filter = filter != NULL ? *filter : (hal_can_filter_t){0};
+    return 1;
+}
+int hal_can_remove_filter(hal_can_bus_t bus, int filter)
+{
+    assert(bus == &s_can_token && filter == 1 && s_can_receive != NULL);
+    s_can_receive = NULL;
+    return 0;
+}
+int hal_can_get_state(hal_can_bus_t bus, hal_can_state_t *state)
+{
+    assert(bus == &s_can_token);
+    *state = s_can_started ? s_can_error_state : HAL_CAN_STATE_STOPPED;
+    return 0;
+}
+
 static const support_test_pin_t s_leds[] = {
     {"DS0", "gpio", 1, true, HAL_GPIO_MODE_IN},
     {"DS1", "gpio", 0, true, HAL_GPIO_MODE_IN},
@@ -228,6 +355,97 @@ static void test_led(int confirmation, fct_state_t expected)
     assert(!fct_busy());
 }
 
+static void test_can_cases(void)
+{
+    fct_can_request_t request;
+    assert(fct_can_parse(true, "500000", "std", "0x123", "01aB", &request) == 0);
+    assert(request.message.len == 2 && request.message.data[1] == 0xab);
+    assert(fct_can_parse(true, "500000", "std", "0x800", "00", &request) == -EINVAL);
+    assert(fct_can_parse(true, "500000", "ext", "0x20000000", "00", &request) == -EINVAL);
+    assert(fct_can_parse(true, "500000", "std", "1", "0", &request) == -EINVAL);
+    assert(fct_can_parse(true, "500000", "std", "1", "gg", &request) == -EINVAL);
+    assert(fct_can_parse(true, "500000", "std", "1", "000000000000000000", &request) == -EINVAL);
+    assert(fct_can_parse(false, "500000", "std", "1", "5001", &request) == -EINVAL);
+    assert(fct_can_parse(false, "500000", "std", "1", "9", &request) == -EINVAL);
+    assert(fct_can_parse(true, "-1", "std", "1", "-", &request) == -EINVAL);
+    assert(fct_start("can-tx") == -EINVAL && fct_start("can-rx") == -EINVAL);
+    assert(fct_start("can-loopback") == 0 && fct_process_next(0) == 0);
+    (void) test_result(5, FCT_PASS);
+    s_can_corrupt = true;
+    assert(fct_start("can-loopback") == 0 && fct_process_next(0) == 0);
+    (void) test_result(5, FCT_FAIL);
+    s_can_corrupt = false;
+    s_can_drop_tx = true;
+    assert(fct_start("can-loopback") == 0 && fct_process_next(0) == 0);
+    (void) test_result(5, FCT_FAIL);
+    assert(s_can_pending == NULL);
+    s_can_drop_tx = false;
+    s_can_drop_rx = true;
+    assert(fct_start("can-loopback") == 0 && fct_process_next(0) == 0);
+    (void) test_result(5, FCT_FAIL);
+    s_can_drop_rx = false;
+    s_cancel_at = s_now + 30U;
+    s_can_drop_rx = true;
+    assert(fct_start("can-loopback") == 0 && fct_process_next(0) == 0);
+    (void) test_result(5, FCT_CANCELLED);
+    s_can_drop_rx = false;
+    s_can_filter_failure = true;
+    assert(fct_start("can-loopback") == 0 && fct_process_next(0) == 0);
+    (void) test_result(5, FCT_FAIL);
+    s_can_filter_failure = false;
+    s_can_error_state = HAL_CAN_STATE_BUS_OFF;
+    assert(fct_start("can-loopback") == 0 && fct_process_next(0) == 0);
+    (void) test_result(5, FCT_FAIL);
+    s_can_error_state = HAL_CAN_STATE_ERROR_ACTIVE;
+    s_can_queue_failure = true;
+    assert(fct_start("can-loopback") == 0 && fct_process_next(0) == 0);
+    (void) test_result(5, FCT_FAIL);
+    s_can_queue_failure = false;
+    s_can_stop_failure = true;
+    assert(fct_start("can-loopback") == 0 && fct_process_next(0) == 0);
+    (void) test_result(5, FCT_FAIL);
+    s_can_stop_failure = false;
+    assert(fct_can_parse(true, "500000", "ext", "0x18ff1234", "-", &request) == 0);
+    assert(fct_start_can(&request) == 0 && fct_start("all") == -EBUSY);
+    assert(fct_process_next(0) == 0);
+    (void) test_result(6, FCT_PASS);
+    s_can_tx_status = -ENETUNREACH;
+    assert(fct_start_can(&request) == 0 && fct_process_next(0) == 0);
+    (void) test_result(6, FCT_FAIL);
+    s_can_tx_status = 0;
+    assert(fct_can_parse(false, "500000", "std", "0x123", "100", &request) == 0);
+    assert(fct_start_can(&request) == 0 && fct_process_next(0) == 0);
+    (void) test_result(7, FCT_PASS);
+    s_can_drop_rx = true;
+    assert(fct_start_can(&request) == 0 && fct_process_next(0) == 0);
+    (void) test_result(7, FCT_FAIL);
+    s_can_drop_rx = false;
+    s_can_external_flags = HAL_CAN_EXT_ID;
+    assert(fct_start_can(&request) == 0 && fct_process_next(0) == 0);
+    (void) test_result(7, FCT_FAIL); /* Same numeric ID in wrong format is not a match. */
+    request.message.flags = HAL_CAN_EXT_ID;
+    assert(fct_start_can(&request) == 0 && fct_process_next(0) == 0);
+    (void) test_result(7, FCT_PASS);
+    s_can_external_flags = 0;
+    request.message.flags = 0;
+    s_can_drop_rx = true;
+    s_cancel_at = s_now + 30U;
+    assert(fct_start_can(&request) == 0 && fct_process_next(0) == 0);
+    (void) test_result(7, FCT_CANCELLED);
+    s_can_drop_rx = false;
+    assert(fct_can_parse(true, "500000", "std", "0x123", "-", &request) == 0);
+    s_can_drop_tx = true;
+    assert(fct_start_can(&request) == 0 && fct_process_next(0) == 0);
+    (void) test_result(6, FCT_FAIL);
+    s_can_drop_tx = false;
+    unsigned int sent_before_batch = s_can_sends;
+    assert(fct_start("all") == 0 && fct_process_next(0) == 0);
+    assert(s_can_sends == sent_before_batch + 2U); /* only two internal frames */
+    (void) test_result(6, FCT_SKIP);
+    (void) test_result(7, FCT_SKIP);
+    assert(!s_can_started && s_can_receive == NULL && s_can_pending == NULL);
+}
+
 int main(void)
 {
     s_task_result = -ENOMEM;
@@ -290,6 +508,7 @@ int main(void)
     s_network_result = 0;
     assert(fct_start("lwip") == 0 && fct_process_next(0) == 0);
     (void) test_result(4, FCT_PASS);
-    puts("PASS: dispatch, failure isolation, confirmation, cancel, timeout, debounce, wrap, probe, lwip");
+    test_can_cases();
+    puts("PASS: dispatch, failure isolation, confirmation, cancel, timeout, debounce, wrap, probe, lwip, CAN");
     return 0;
 }

@@ -27,87 +27,112 @@
 #include <stddef.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/* ------------------------------------------------------------------------- */
-/* Opaque handle types                                                       */
-/* ------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------------- */
+    /* Opaque handle types                                                       */
+    /* ------------------------------------------------------------------------- */
 
-/** CAN bus handle (backend: Zephyr `const struct device` / Linux can fd). */
-typedef void *hal_can_bus_t;
+    /** CAN bus handle (backend: Zephyr `const struct device` / Linux can fd). */
+    typedef void *hal_can_bus_t;
 
 /* ------------------------------------------------------------------------- */
 /* Message types                                                             */
 /* ------------------------------------------------------------------------- */
 
 /** Message flags (bitmask, see @ref HAL_CAN_EXT_ID / @ref HAL_CAN_RTR). */
-#define HAL_CAN_EXT_ID (1 << 0) /**< @brief The @ref hal_can_msg_t.id is a 29-bit extended ID. */
-#define HAL_CAN_RTR    (1 << 1) /**< @brief Remote Transmission Request frame (no payload). */
+#define HAL_CAN_EXT_ID (1 << 0)      /**< @brief The @ref hal_can_msg_t.id is a 29-bit extended ID. */
+#define HAL_CAN_MAX_TX_WAIT_MS 1000U /* bounded queue wait; no infinite TX admission */
+#define HAL_CAN_RTR (1 << 1)         /**< @brief Remote Transmission Request frame (no payload). */
 
-/**
+    /**
  * @brief A single CAN frame (CAN 2.0).
  *
  * @p id is 11-bit (standard) or 29-bit (extended when @ref HAL_CAN_EXT_ID).
  * @p data holds up to 8 payload bytes; @p len is 0-8. For RTR frames
  * @p len is 0 and @p data is ignored.
  */
-typedef struct {
-	/** Frame identifier: 11-bit standard or 29-bit extended. */
-	uint32_t id;
-	/** Payload bytes (8 max for CAN 2.0). */
-	uint8_t  data[8];
-	/** Payload length in bytes, 0-8. */
-	uint8_t  len;
-	/** Flag bitmask: @ref HAL_CAN_EXT_ID | @ref HAL_CAN_RTR. */
-	uint8_t  flags;
-} hal_can_msg_t;
+    typedef struct
+    {
+        /** Frame identifier: 11-bit standard or 29-bit extended. */
+        uint32_t id;
+        /** Payload bytes (8 max for CAN 2.0). */
+        uint8_t data[8];
+        /** Payload length in bytes, 0-8. */
+        uint8_t len;
+        /** Flag bitmask: @ref HAL_CAN_EXT_ID | @ref HAL_CAN_RTR. */
+        uint8_t flags;
+    } hal_can_msg_t;
 
-/** RX filter: a frame matches when (frame_id & mask) == (filter.id & mask). */
-typedef struct {
-	/** Filter id. */
-	uint32_t id;
-	/** Acceptance mask; 0xFFFFFFFF matches exactly, 0x0 matches all. */
-	uint32_t mask;
-} hal_can_filter_t;
+    /** RX filter: a frame matches when (frame_id & mask) == (filter.id & mask). */
+    typedef struct
+    {
+        /** Filter id. */
+        uint32_t id;
+        /** Acceptance mask; 0xFFFFFFFF matches exactly, 0x0 matches all. */
+        uint32_t mask;
+    } hal_can_filter_t;
 
-/* ------------------------------------------------------------------------- */
-/* Callbacks                                                                 */
-/* ------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------------- */
+    /* Callbacks                                                                 */
+    /* ------------------------------------------------------------------------- */
 
-/**
+    /**
  * @brief RX callback, invoked from backend context when a matching frame
  *        arrives.
  *
  * The message pointer is valid only for the duration of the callback.
- * Keep the callback short; do real work in a task (M7).
+ * Keep the callback short; do real work in a task (M7). Zephyr callbacks may
+ * execute in ISR context: no blocking HAL/OSAL calls or Shell output. User
+ * data must remain valid until filter removal; stopping alone retains RX filters.
  */
-typedef void (*hal_can_rx_cb_t)(void *user_data, const hal_can_msg_t *msg);
+    typedef void (*hal_can_rx_cb_t)(void *user_data, const hal_can_msg_t *msg);
 
-/**
+    /**
  * @brief Async send completion callback.
  *
  * @p status is 0 on success or a negative errno (`-ETIMEDOUT`, `-EIO`, ...).
- * @p arg is the `cb_arg` passed to @ref hal_can_send.
+ * @p arg is the `cb_arg` passed to @ref hal_can_send. May run in ISR context
+ * or the stopping task; keep user data alive until completion or successful stop.
  */
-typedef void (*hal_can_done_cb_t)(void *arg, int status);
+    typedef void (*hal_can_done_cb_t)(void *arg, int status);
 
-/* ------------------------------------------------------------------------- */
-/* Controller state                                                          */
-/* ------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------------- */
+    /* Controller state                                                          */
+    /* ------------------------------------------------------------------------- */
 
-/** CAN controller error state. */
-typedef enum {
-	HAL_CAN_STATE_ERROR_ACTIVE = 0, /**< Controller is in the normal error-active state. */
-	HAL_CAN_STATE_ERROR_PASSIVE,     /**< Controller is in the error-passive state. */
-	HAL_CAN_STATE_BUS_OFF,           /**< Controller is bus-off and no longer participates on the bus. */
-} hal_can_state_t;
+    /** CAN controller error state. */
+    typedef enum
+    {
+        HAL_CAN_STATE_ERROR_ACTIVE = 0, /**< Controller is in the normal error-active state. */
+        HAL_CAN_STATE_ERROR_PASSIVE,    /**< Controller is in the error-passive state. */
+        HAL_CAN_STATE_BUS_OFF,          /**< Controller is bus-off and no longer participates on the bus. */
+        HAL_CAN_STATE_STOPPED,
+        HAL_CAN_STATE_ERROR_WARNING,
+    } hal_can_state_t;
 
-/* ------------------------------------------------------------------------- */
-/* API                                                                       */
-/* ------------------------------------------------------------------------- */
+    typedef enum
+    {
+        HAL_CAN_MODE_NORMAL = 0,
+        HAL_CAN_MODE_INTERNAL_LOOPBACK,
+        HAL_CAN_MODE_LISTEN_ONLY,
+    } hal_can_mode_t;
 
-/**
+    /** Configure a stopped classic-CAN controller; no CAN FD or live reconfiguration.
+ * Internal loopback must not drive frames onto the physical bus.
+ */
+    int hal_can_configure(hal_can_bus_t bus, uint32_t bitrate, hal_can_mode_t mode);
+    int hal_can_start(hal_can_bus_t bus);
+    /** On success, stop and cancel outstanding TX requests before returning; idempotent. */
+    int hal_can_stop(hal_can_bus_t bus);
+
+    /* ------------------------------------------------------------------------- */
+    /* API                                                                       */
+    /* ------------------------------------------------------------------------- */
+
+    /**
  * @brief Queue a CAN frame for asynchronous transmission.
  *
  * Returns once the frame is accepted by the driver. When the transmission
@@ -116,18 +141,19 @@ typedef enum {
  *
  * @param bus         CAN bus handle.
  * @param msg         Frame to send.
- * @param timeout_ms  Max time to wait for the send to complete, in ms
- *                    (a dedicated TX timeout, not a lifetime bound).
- * @param done_cb     Completion callback; may be NULL on backends that
- *                    only support synchronous sending.
+ * @param timeout_ms  Max wait for an empty TX slot; completion has a separate
+ *                    lifetime. Range 0..HAL_CAN_MAX_TX_WAIT_MS, no forever wait.
+ *                    Stop the controller to cancel pending TX.
+ * @param done_cb     Optional completion notification. NULL discards the
+ *                    notification; the Zephyr runtime still queues asynchronously.
  * @param cb_arg      Opaque argument forwarded to @p done_cb.
  *
  * @return 0 on success (frame queued), negative errno on failure.
  */
-int hal_can_send(hal_can_bus_t bus, const hal_can_msg_t *msg, uint32_t timeout_ms,
-		 hal_can_done_cb_t done_cb, void *cb_arg);
+    int hal_can_send(hal_can_bus_t bus, const hal_can_msg_t *msg, uint32_t timeout_ms,
+        hal_can_done_cb_t done_cb, void *cb_arg);
 
-/**
+    /**
  * @brief Register an RX filter with its callback.
  *
  * Each frame matching @p filter is delivered to @p cb with @p user_data.
@@ -140,10 +166,10 @@ int hal_can_send(hal_can_bus_t bus, const hal_can_msg_t *msg, uint32_t timeout_m
  * @return Filter id (>= 0) on success, negative errno on failure.
  *         The returned id is passed to @ref hal_can_remove_filter.
  */
-int hal_can_add_rx_filter(hal_can_bus_t bus, const hal_can_filter_t *filter,
-			  hal_can_rx_cb_t cb, void *user_data);
+    int hal_can_add_rx_filter(hal_can_bus_t bus, const hal_can_filter_t *filter,
+        hal_can_rx_cb_t cb, void *user_data);
 
-/**
+    /**
  * @brief Remove a previously registered RX filter.
  *
  * @param bus       CAN bus handle.
@@ -152,9 +178,9 @@ int hal_can_add_rx_filter(hal_can_bus_t bus, const hal_can_filter_t *filter,
  * @return 0 on success, negative errno on failure (e.g. -EINVAL if the
  *         filter id is unknown).
  */
-int hal_can_remove_filter(hal_can_bus_t bus, int filter_id);
+    int hal_can_remove_filter(hal_can_bus_t bus, int filter_id);
 
-/**
+    /**
  * @brief Read the current controller error state.
  *
  * @param bus   CAN bus handle.
@@ -162,7 +188,7 @@ int hal_can_remove_filter(hal_can_bus_t bus, int filter_id);
  *
  * @return 0 on success, negative errno on failure.
  */
-int hal_can_get_state(hal_can_bus_t bus, hal_can_state_t *state);
+    int hal_can_get_state(hal_can_bus_t bus, hal_can_state_t *state);
 
 #ifdef __cplusplus
 }

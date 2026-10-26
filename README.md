@@ -1,6 +1,6 @@
 # apollo-fct-test
 
-正点原子阿波罗 V1（STM32H743IIT6）硬件功能测试与 Zephyr 学习工程。当前已接入串口 Shell、统一测试调度、LED/按键交互测试，以及 GPIO/I2C 控制器诊断。全部硬件覆盖仍在逐项实现中。
+正点原子阿波罗 V1（STM32H743IIT6）硬件功能测试与 Zephyr 学习工程。当前已接入串口 Shell、统一测试调度、LED/按键交互测试、GPIO/I2C 控制器诊断及经典 CAN 内部/外部测试。全部硬件覆盖仍在逐项实现中。
 
 ## 固件构建
 
@@ -27,6 +27,7 @@ fct run led
 fct confirm pass
 fct run keys
 fct run lwip
+fct run can-loopback
 fct stop
 ```
 
@@ -35,6 +36,8 @@ fct stop
 命令、接线依据、覆盖边界和测试方法见 [test-program.md](docs/test-program.md)，调试过程见 [调试笔记](docs/apollo开发板调试笔记.md)。尚未烧录验证。
 
 网络协议栈采用 lwIP 2.2.1，已实现基于 OSAL 的系统适配和 UDP/IPv4 软件回环自检；`fct run lwip` 不验证 MAC/PHY 或网线。Zephyr 原生 IP 栈保持关闭，物理网卡收发尚未接入。来源、配置与后续硬件核对项见 [lwip-integration.md](docs/lwip-integration.md)。
+
+CAN1 已按文档使用 PA11/PA12（P10），当前固件不可同时使用这些引脚的 USB OTG；USART1 USB 转串口不受影响。`fct run can-loopback` 只验证控制器内部标准/扩展帧；外部收发通过 `fct can tx/rx` 显式指定参数，不会自动执行。命令、接线及判定范围见 [can-tests.md](docs/can-tests.md)，尚未实板验证。
 
 ## 分层
 
