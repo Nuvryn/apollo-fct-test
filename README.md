@@ -26,12 +26,15 @@ fct results
 fct run led
 fct confirm pass
 fct run keys
+fct run lwip
 fct stop
 ```
 
 批量执行只运行自动项；LED 需要观察确认，按键需要先释放全部按键再按提示操作。当前自动项只证明控制器就绪，不证明器件和线路功能正常。
 
 命令、接线依据、覆盖边界和测试方法见 [test-program.md](docs/test-program.md)，调试过程见 [调试笔记](docs/apollo开发板调试笔记.md)。尚未烧录验证。
+
+网络协议栈采用 lwIP 2.2.1，已实现基于 OSAL 的系统适配和 UDP/IPv4 软件回环自检；`fct run lwip` 不验证 MAC/PHY 或网线。Zephyr 原生 IP 栈保持关闭，物理网卡收发尚未接入。来源、配置与后续硬件核对项见 [lwip-integration.md](docs/lwip-integration.md)。
 
 ## 分层
 

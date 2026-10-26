@@ -6,6 +6,7 @@
 #include "hal/hal_gpio.h"
 #include "osal/osal.h"
 #include "support/test_fixture.h"
+#include "support/network_stack.h"
 
 static int fct_led_level(const support_test_pin_t *pin, bool on)
 {
@@ -195,4 +196,16 @@ int fct_run_i2c(fct_context_t *context)
     }
     (void) snprintf(context->reason, sizeof(context->reason), "I2C2 controller ready; devices and bus signals untested");
     return 0;
+}
+
+int fct_run_lwip(fct_context_t *context)
+{
+    int result = fct_checkpoint(context);
+    if (result == 0)
+    {
+        result = support_network_selftest(1000);
+    }
+    (void) snprintf(context->reason, sizeof(context->reason),
+        "lwIP UDP/IPv4 127.0.0.1 payload verified; MAC/PHY/cable untested");
+    return result;
 }

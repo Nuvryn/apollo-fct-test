@@ -66,3 +66,13 @@ uint32_t osal_get_tick_ms(void)
 	s_unimpl_count++;
 	return (uint32_t)OSAL_ERR_NOTSUP;
 }
+/* New runtime-only capabilities are unavailable in offline skeletons. */
+int osal_task_start(osal_task_t *task, const osal_task_attr_t *attr)
+{
+    (void)attr;
+    if (task != NULL) { *task = NULL; }
+    return OSAL_ERR_NOTSUP;
+}
+osal_task_t osal_task_current(void) { return NULL; }
+uintptr_t osal_critical_enter(void) { return UINTPTR_MAX; }
+void osal_critical_exit(uintptr_t key) { (void)key; }

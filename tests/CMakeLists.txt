@@ -10,3 +10,15 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(fct_tests PRIVATE -UNDEBUG)
 endif()
 add_test(NAME fct_state_and_hardware_sequences COMMAND fct_tests)
+
+find_package(Threads REQUIRED)
+add_subdirectory(../third_party/lwip lwip-library)
+add_executable(lwip_tests lwip/lwip_tests.c lwip/host_osal.c
+    ../backends/support/zephyr/lwip_stack.c)
+target_link_libraries(lwip_tests PRIVATE apollo_lwip Threads::Threads)
+target_compile_options(lwip_tests PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+add_test(NAME lwip_real_stack_and_sys_arch COMMAND lwip_tests)
+set_tests_properties(lwip_real_stack_and_sys_arch PROPERTIES TIMEOUT 20)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_test(NAME lwip_vendor_integrity
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_lwip_vendor.py)

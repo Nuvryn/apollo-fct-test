@@ -58,3 +58,12 @@
     clock-frequency = <100000>;
     status = "okay";
 };
+
+/* Internal RNG for lwIP random numbers; no additional board pins are used. */
+&clk_hsi48 {
+    status = "okay";
+};
+
+&rng {
+    status = "okay";
+};

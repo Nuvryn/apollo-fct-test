@@ -20,6 +20,7 @@ static const fct_case_t s_cases[] = {
     {{"i2c", "I2C2 controller readiness only; no device function test", false, 1000}, fct_run_i2c},
     {{"led", "Observe DS0/DS1 blinking, then fct confirm pass|fail", true, 30000}, fct_run_led},
     {{"keys", "Release all keys, then press/release WK_UP KEY2 KEY1 KEY0", true, 60000}, fct_run_keys},
+    {{"lwip", "lwIP UDP/IPv4 software loopback only; no Ethernet PHY test", false, 3000}, fct_run_lwip},
 };
 
 static osal_mutex_t s_lock;

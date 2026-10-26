@@ -10,7 +10,11 @@ if(ZEPHYR_FIRMWARE)
         backends/osal/zephyr/osal_runtime.c
         backends/hal/zephyr/hal_gpio_runtime.c
         backends/hal/zephyr/hal_i2c_runtime.c
-        backends/support/zephyr/test_fixture.c)
+        backends/support/zephyr/test_fixture.c
+        backends/support/zephyr/lwip_platform.c
+        backends/support/zephyr/lwip_stack.c)
+    add_subdirectory(third_party/lwip)
+    target_link_libraries(app PRIVATE apollo_lwip)
     target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/app)
     target_compile_options(app PRIVATE -Wall -Wextra)
     return()
@@ -50,6 +54,7 @@ add_library(apollo_hal STATIC
     backends/hal/${PLATFORM}/hal_flash.c
     backends/hal/${PLATFORM}/hal_rng.c)
 add_library(apollo_support STATIC
+    backends/support/${PLATFORM}/network_stack_stub.c
     backends/support/${PLATFORM}/console.c
     backends/support/${PLATFORM}/args.c
     backends/support/${PLATFORM}/config_source.c

@@ -19,6 +19,7 @@ int fct_run_led(fct_context_t *context);
 int fct_run_keys(fct_context_t *context);
 int fct_run_gpio(fct_context_t *context);
 int fct_run_i2c(fct_context_t *context);
+int fct_run_lwip(fct_context_t *context);
 /* A single bounded dispatch iteration, also used by host unit tests. */
 int fct_process_next(uint32_t timeout_ms);
 

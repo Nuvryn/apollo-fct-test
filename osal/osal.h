@@ -14,8 +14,9 @@
  *  - Error handling (M4): every function returns `int`, 0 = success, a
  *    negative errno value on failure (-EINVAL, -ENOMEM, -ETIMEDOUT, ...).
  *    Constants defined in osal_types.h.
- *  - Context constraint (M7): ALL APIs below are thread-context only and must
- *    NOT be called from interrupt context (Zephyr ISR / Linux signal handler).
+ *  - Context constraint (M7): APIs are thread-context only except the explicitly
+ *    documented critical-section pair. Blocking APIs must NOT be called from
+ *    interrupt context (Zephyr ISR / Linux signal handler).
  *    Interrupts do minimal work (set a flag, wake a task) and defer all real
  *    processing to a task. There are no `_from_isr` variants in v1.
  *  - Timeout semantics: OSAL_WAIT_FOREVER blocks indefinitely,
@@ -57,12 +58,28 @@ extern "C" {
  */
 int osal_task_create(const osal_task_attr_t *attr);
 
+/** Start a permanent task and return its opaque handle; NULL output is invalid.
+ * Slots are retained until reset even if an entry returns or is aborted.
+ */
+int osal_task_start(osal_task_t *task, const osal_task_attr_t *attr);
+
+/** Current task identity, for equality checks only; never dereference it. */
+osal_task_t osal_task_current(void);
+
+/** Save/restore a short nested critical section. Never block inside it.
+ * The Zephyr backend supports single-core targets only. Restore in LIFO order.
+ * Unlike the blocking OSAL APIs, this pair may also be used from an ISR.
+ * Offline skeletons return UINTPTR_MAX and provide no exclusion; never use
+ * those backends to execute a live protocol stack.
+ */
+uintptr_t osal_critical_enter(void);
+void osal_critical_exit(uintptr_t key);
+
 /**
- * @brief Delete a task and release its resources.
+ * @brief Abort a task; Zephyr's fixed task slot is retained until reset.
  *
- * @param[in] task Reserved task handle. The v1 create API does not return a
- *                 handle. Only NULL is currently supported (a no-op); the
- *                 Zephyr runtime worker remains allocated until reset.
+ * @param[in] task Handle from osal_task_start; NULL is a no-op. Callers must
+ *                 quiesce resources before abort. Zephyr slots are not recycled.
  *
  * @note Thread context only (M7).
  */

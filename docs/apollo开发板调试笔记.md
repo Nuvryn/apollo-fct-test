@@ -24,3 +24,14 @@
 - ARM GCC 首次高并行构建在 picolibc 数学库内部崩溃，降低至 -j2 后完成；主机 GCC 也曾出现临时系统头解析失败，-j1 重编通过，源文件未因此修改。
 - 已有主机逻辑测试覆盖忙状态、批量过滤、错误后继续、人工确认、超时、取消、LED 清理、按键消抖、32位时间回绕和探测地址边界。
 - 尚未进行烧录、串口 Shell 实际输入、LED/按键实测、I2C ACK 波形、真实 OSAL 等待/调度时序验证。
+
+## 2026-10-26：lwIP 系统适配与软件回环
+
+- 使用本地 lwip-2.2.1 源码，213 个 vendor 文件逐一比对 SHA256，无源码修改；保留 COPYING，移植文件与源码分离。vendor 禁止 Git 行尾转换以保证来源校验。
+- 配置 NO_SYS=0，tcpip 独立线程；OSAL 扩为 4 个固定 4096B 任务槽，新增带句柄启动、当前任务与可嵌套单核 IRQ 临界区，实现信号量。任务槽不回收。
+- 处理 lwIP timeout=0 与 OSAL 无等待语义差异，邮箱允许 NULL 消息。系统失败必须返回错误或按上游契约断言；ISR 邮箱投递尚不支持，后续 RX 需任务化。
+- 上游 LWIP_PROVIDE_ERRNO 使用 ifdef 判断，不能定义成 0；保持未定义并启用 LWIP_ERRNO_STDINCLUDE，避免覆盖目标 libc errno。
+- 原生 Zephyr 网络栈关闭；开启片内 RNG 与 HSI48 提供随机数。硬件资料中的 Ethernet 引脚已核对，但 PHY 地址、复位/strap 和 PG14 文本矛盾尚未核实，不启用 MAC/PHY。
+- 新增 fct run lwip 自动项，实际运行 IPv4 UDP 127.0.0.1 软件回环并核对完整载荷；不宣称物理网口通过。
+- 主机测试运行真实 lwIP/sys_arch：41 次 netconn UDP 回环、lwip_ 前缀 UDP socket 收发、收包超时、分配失败、满/空邮箱、NULL 消息、信号量等待、嵌套保护与资源回收。FCT 回归包含网络失败不能标记通过。
+- Zephyr 固件已链接，未烧录验证；主机 OSAL 仅为 pthread 测试夹具，不代表 Linux 生产后端已实现。RNG 时钟、IRQ 临界区和实际调度还需实板确认。

@@ -17,3 +17,6 @@
 *.pdf  binary
 *.o    binary
 *.a    binary
+
+# Preserve vendored upstream bytes for source-sha256.txt (own port uses LF).
+/third_party/lwip/vendor/** -text

@@ -1,0 +1,54 @@
+/** @file lwipopts.h @brief Threaded IPv4 stack, independently of Zephyr IP. */
+#ifndef LWIP_PORT_LWIPOPTS_H
+#define LWIP_PORT_LWIPOPTS_H
+
+#define NO_SYS 0
+#define SYS_LIGHTWEIGHT_PROT 1
+#define LWIP_TCPIP_CORE_LOCKING 0
+#define LWIP_MARK_TCPIP_THREAD() lwip_port_mark_core()
+#define LWIP_ASSERT_CORE_LOCKED() lwip_port_check_core()
+#define TCPIP_THREAD_NAME "lwip_tcpip"
+#define TCPIP_THREAD_STACKSIZE 4096
+#define TCPIP_THREAD_PRIO 17
+#define TCPIP_MBOX_SIZE 16
+#define DEFAULT_THREAD_STACKSIZE 4096
+#define DEFAULT_THREAD_PRIO 16
+#define DEFAULT_UDP_RECVMBOX_SIZE 8
+#define DEFAULT_TCP_RECVMBOX_SIZE 8
+#define DEFAULT_ACCEPTMBOX_SIZE 4
+#define LWIP_NETCONN_SEM_PER_THREAD 0
+
+#define MEM_ALIGNMENT 4
+#define MEM_SIZE (32 * 1024)
+#define MEMP_NUM_NETCONN 8
+#define MEMP_NUM_TCP_PCB 4
+#define MEMP_NUM_UDP_PCB 4
+#define MEMP_NUM_TCPIP_MSG_API 16
+#define MEMP_NUM_TCPIP_MSG_INPKT 16
+#define PBUF_POOL_SIZE 16
+#define PBUF_POOL_BUFSIZE 1536
+#define LWIP_IPV4 1
+#define LWIP_IPV6 0
+#define LWIP_TCP 1
+#define LWIP_UDP 1
+#define LWIP_ICMP 1
+#define LWIP_ARP 1
+#define LWIP_ETHERNET 1
+#define LWIP_DHCP 0
+#define LWIP_DNS 0
+#define LWIP_NETIF_LOOPBACK 1
+#define LWIP_HAVE_LOOPIF 1
+#define LWIP_NETIF_LOOPBACK_MULTITHREADING 1
+#define LWIP_NETCONN 1
+#define LWIP_SOCKET 1
+#define LWIP_COMPAT_SOCKETS 0
+#define LWIP_POSIX_SOCKETS_IO_NAMES 0
+#define LWIP_SOCKET_SELECT 0
+#define LWIP_SOCKET_POLL 0
+#define LWIP_SO_RCVTIMEO 1
+#define LWIP_SO_SNDTIMEO 1
+#define LWIP_STATS 0
+/* LWIP_PROVIDE_ERRNO is tested with #ifdef upstream: leave it undefined. */
+#define LWIP_ERRNO_STDINCLUDE 1
+
+#endif

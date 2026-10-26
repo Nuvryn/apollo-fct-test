@@ -8,6 +8,15 @@
 #include "hal/hal_dev.h"
 #include "hal/hal_i2c.h"
 #include "support/test_fixture.h"
+#include "support/network_stack.h"
+
+static int s_network_result;
+
+int support_network_selftest(uint32_t timeout_ms)
+{
+    assert(timeout_ms > 0U);
+    return s_network_result; /* Real lwIP is exercised by lwip_tests. */
+}
 
 static uint32_t s_now;
 static uint32_t s_cancel_at;
@@ -275,6 +284,12 @@ int main(void)
     assert(fct_i2c_probe(0x50) == -EIO && s_probe_count == 1U);
     s_missing_i2c = true;
     assert(fct_i2c_probe(0x50) == -ENODEV && !fct_busy());
-    puts("PASS: dispatch, failure isolation, confirmation, cancel, timeout, debounce, wrap and probe");
+    s_network_result = -ETIMEDOUT;
+    assert(fct_start("lwip") == 0 && fct_process_next(0) == 0);
+    (void) test_result(4, FCT_FAIL);
+    s_network_result = 0;
+    assert(fct_start("lwip") == 0 && fct_process_next(0) == 0);
+    (void) test_result(4, FCT_PASS);
+    puts("PASS: dispatch, failure isolation, confirmation, cancel, timeout, debounce, wrap, probe, lwip");
     return 0;
 }
