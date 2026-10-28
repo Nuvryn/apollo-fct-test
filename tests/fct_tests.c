@@ -6,11 +6,40 @@
 #include "fct/fct_internal.h"
 #include "fct/can_test.h"
 #include "hal/hal_can.h"
+#include "hal/hal_display.h"
 #include "osal/osal.h"
 #include "hal/hal_dev.h"
 #include "hal/hal_i2c.h"
 #include "support/test_fixture.h"
 #include "support/network_stack.h"
+
+static int s_display_error;
+static int s_display_write_error;
+static int s_display_cleanup_error;
+static bool s_display_blank = true;
+static unsigned int s_display_rows;
+int hal_display_ready(void) { return s_display_error; }
+int hal_display_blanking(bool blank)
+{
+    s_display_blank = blank;
+    return blank && s_display_rows > 0U ? s_display_cleanup_error : 0;
+}
+int hal_display_write_row(uint16_t y, const uint16_t *pixels, uint16_t count)
+{
+    static const uint16_t colors[] = {0xf800, 0x07e0, 0x001f, 0xffff, 0};
+    assert(count == HAL_DISPLAY_WIDTH && y < HAL_DISPLAY_HEIGHT);
+    unsigned int pattern = s_display_rows / HAL_DISPLAY_HEIGHT;
+    assert(y == s_display_rows % HAL_DISPLAY_HEIGHT && pattern < 7U);
+    for (unsigned int x = 0; x < count; x++)
+    {
+        uint16_t expected = pattern < 5U ? colors[pattern] :
+            (pattern == 5U ? colors[x * 5U / count] :
+            ((x % 64U == 0U || y % 60U == 0U || x == count - 1U || y == HAL_DISPLAY_HEIGHT - 1U) ? 0xffffU : 0));
+        assert(pixels[x] == expected);
+    }
+    s_display_rows++;
+    return s_display_write_error;
+}
 
 static int s_network_result;
 
@@ -320,7 +349,7 @@ static void test_output(const char *text)
         s_cancel_on_start = false;
         assert(fct_stop() == 0);
     }
-    if (strstr(text, "Observe LEDs:") != NULL && s_confirmation_mode != 0)
+    if (strstr(text, "Observe hardware:") != NULL && s_confirmation_mode != 0)
     {
         assert(fct_confirm(s_confirmation_mode > 0) == 0);
         assert(fct_confirm(true) == -EINVAL);
@@ -508,6 +537,44 @@ int main(void)
     s_network_result = 0;
     assert(fct_start("lwip") == 0 && fct_process_next(0) == 0);
     (void) test_result(4, FCT_PASS);
+    s_confirmation_mode = 1;
+    s_display_rows = 0;
+    assert(fct_start("lcd") == 0 && fct_process_next(0) == 0);
+    (void)test_result(8, FCT_PASS);
+    assert(s_display_rows == 4200U && s_display_blank);
+    s_confirmation_mode = -1;
+    s_display_rows = 0;
+    assert(fct_start("lcd") == 0 && fct_process_next(0) == 0);
+    (void)test_result(8, FCT_FAIL);
+    assert(s_display_blank);
+    s_confirmation_mode = 0;
+    s_display_rows = 0;
+    assert(fct_start("lcd") == 0 && fct_process_next(0) == 0);
+    (void)test_result(8, FCT_FAIL);
+    assert(s_display_blank);
+    s_display_rows = 0;
+    s_display_write_error = -EIO;
+    assert(fct_start("lcd") == 0 && fct_process_next(0) == 0);
+    (void)test_result(8, FCT_FAIL);
+    assert(s_display_blank && s_display_rows == 1U);
+    s_display_write_error = 0;
+    s_display_rows = 0;
+    s_cancel_at = s_now + 30U;
+    assert(fct_start("lcd") == 0 && fct_process_next(0) == 0);
+    (void)test_result(8, FCT_CANCELLED);
+    assert(s_display_blank);
+    s_display_rows = 0;
+    s_display_error = -ENODEV;
+    assert(fct_start("lcd") == 0 && fct_process_next(0) == 0);
+    (void)test_result(8, FCT_FAIL);
+    assert(s_display_rows == 0U);
+    s_display_error = 0;
+    s_display_rows = 0;
+    s_confirmation_mode = 1;
+    s_display_cleanup_error = -EIO;
+    assert(fct_start("lcd") == 0 && fct_process_next(0) == 0);
+    (void)test_result(8, FCT_FAIL);
+    s_display_cleanup_error = 0;
     test_can_cases();
     puts("PASS: dispatch, failure isolation, confirmation, cancel, timeout, debounce, wrap, probe, lwip, CAN");
     return 0;

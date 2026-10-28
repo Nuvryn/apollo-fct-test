@@ -92,3 +92,5 @@ ctest --test-dir build-tests --output-on-failure
 主机测试使用假时间和假 HAL/OSAL，覆盖调度、批量过滤、错误隔离、人工确认、超时、取消、LED 清理、按键消抖、时钟回绕及地址探测边界；不代替真实 Zephyr 后端和实板验证。
 
 固件、两平台骨架分别按 README 构建。检查生成设备树、ELF 起始地址和编译数据库。尚未进行烧录、串口交互、真实队列超时及 I2C 波形验证。
+
+LCD 人工测试：`fct run lcd`，自动批次跳过；详见 [LCD 测试](lcd-tests.md)。

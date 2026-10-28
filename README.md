@@ -72,3 +72,5 @@ ctest --test-dir build-tests --output-on-failure
 ```
 
 主机测试使用假时间和假硬件，只验证调度、状态及测试序列，不替代实板验证。
+
+RGB LCD（7 寸 1024×600）：`fct run lcd`，详见 [LCD 测试](docs/lcd-tests.md)。

@@ -4,7 +4,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_testing()
 add_executable(fct_tests fct_tests.c ../app/fct/fct.c ../app/fct/basic_tests.c
-    ../app/fct/can_test.c ../app/fct/can_args.c)
+    ../app/fct/can_test.c ../app/fct/can_args.c ../app/fct/lcd_test.c)
 target_include_directories(fct_tests PRIVATE .. ../app)
 target_compile_options(fct_tests PRIVATE -Wall -Wextra -Werror -Wpedantic)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")

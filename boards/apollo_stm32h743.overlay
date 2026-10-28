@@ -1,3 +1,5 @@
+#include <zephyr/dt-bindings/display/panel.h>
+#include <zephyr/dt-bindings/memory-attr/memory-attr-arm.h>
 /* Apollo V1 wiring is defined by docs/hardware.md. */
 / {
     chosen {
@@ -28,9 +30,12 @@
     label = "DS1";
 };
 
-/* External SDRAM needs FMC initialization before it may be used. */
+/* SDRAM bank 1; the inherited node label is historical. */
 &sdram2 {
-    status = "disabled";
+    compatible = "zephyr,memory-region", "mmio-sram";
+    zephyr,memory-region = "SDRAM1";
+    zephyr,memory-attr = <DT_MEM_ARM_MPU_RAM>;
+    status = "okay";
 };
 
 /* hardware.md: PA11 RX / PA12 TX, selected by P10 instead of USB. */
@@ -72,4 +77,121 @@
 
 &rng {
     status = "okay";
+};
+
+&pinctrl {
+    apollo_lcd_0: apollo_lcd_0 { pinmux = <STM32_PINMUX('F', 10, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_1: apollo_lcd_1 { pinmux = <STM32_PINMUX('G', 6, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_2: apollo_lcd_2 { pinmux = <STM32_PINMUX('G', 7, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_3: apollo_lcd_3 { pinmux = <STM32_PINMUX('G', 11, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_4: apollo_lcd_4 { pinmux = <STM32_PINMUX('H', 9, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_5: apollo_lcd_5 { pinmux = <STM32_PINMUX('H', 10, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_6: apollo_lcd_6 { pinmux = <STM32_PINMUX('H', 11, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_7: apollo_lcd_7 { pinmux = <STM32_PINMUX('H', 12, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_8: apollo_lcd_8 { pinmux = <STM32_PINMUX('H', 13, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_9: apollo_lcd_9 { pinmux = <STM32_PINMUX('H', 14, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_10: apollo_lcd_10 { pinmux = <STM32_PINMUX('H', 15, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_11: apollo_lcd_11 { pinmux = <STM32_PINMUX('I', 0, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_12: apollo_lcd_12 { pinmux = <STM32_PINMUX('I', 1, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_13: apollo_lcd_13 { pinmux = <STM32_PINMUX('I', 2, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_14: apollo_lcd_14 { pinmux = <STM32_PINMUX('I', 4, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_15: apollo_lcd_15 { pinmux = <STM32_PINMUX('I', 5, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_16: apollo_lcd_16 { pinmux = <STM32_PINMUX('I', 6, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_17: apollo_lcd_17 { pinmux = <STM32_PINMUX('I', 7, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_18: apollo_lcd_18 { pinmux = <STM32_PINMUX('I', 9, AF14)>; slew-rate = "very-high-speed"; };
+    apollo_lcd_19: apollo_lcd_19 { pinmux = <STM32_PINMUX('I', 10, AF14)>; slew-rate = "very-high-speed"; };
+};
+
+&pinctrl {
+    apollo_sdram_0: apollo_sdram_0 { pinmux = <STM32_PINMUX('C', 0, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_1: apollo_sdram_1 { pinmux = <STM32_PINMUX('C', 2, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_2: apollo_sdram_2 { pinmux = <STM32_PINMUX('C', 3, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_3: apollo_sdram_3 { pinmux = <STM32_PINMUX('D', 0, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_4: apollo_sdram_4 { pinmux = <STM32_PINMUX('D', 1, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_5: apollo_sdram_5 { pinmux = <STM32_PINMUX('D', 8, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_6: apollo_sdram_6 { pinmux = <STM32_PINMUX('D', 9, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_7: apollo_sdram_7 { pinmux = <STM32_PINMUX('D', 10, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_8: apollo_sdram_8 { pinmux = <STM32_PINMUX('D', 14, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_9: apollo_sdram_9 { pinmux = <STM32_PINMUX('D', 15, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_10: apollo_sdram_10 { pinmux = <STM32_PINMUX('E', 0, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_11: apollo_sdram_11 { pinmux = <STM32_PINMUX('E', 1, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_12: apollo_sdram_12 { pinmux = <STM32_PINMUX('E', 7, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_13: apollo_sdram_13 { pinmux = <STM32_PINMUX('E', 8, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_14: apollo_sdram_14 { pinmux = <STM32_PINMUX('E', 9, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_15: apollo_sdram_15 { pinmux = <STM32_PINMUX('E', 10, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_16: apollo_sdram_16 { pinmux = <STM32_PINMUX('E', 11, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_17: apollo_sdram_17 { pinmux = <STM32_PINMUX('E', 12, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_18: apollo_sdram_18 { pinmux = <STM32_PINMUX('E', 13, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_19: apollo_sdram_19 { pinmux = <STM32_PINMUX('E', 14, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_20: apollo_sdram_20 { pinmux = <STM32_PINMUX('E', 15, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_21: apollo_sdram_21 { pinmux = <STM32_PINMUX('F', 0, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_22: apollo_sdram_22 { pinmux = <STM32_PINMUX('F', 1, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_23: apollo_sdram_23 { pinmux = <STM32_PINMUX('F', 2, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_24: apollo_sdram_24 { pinmux = <STM32_PINMUX('F', 3, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_25: apollo_sdram_25 { pinmux = <STM32_PINMUX('F', 4, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_26: apollo_sdram_26 { pinmux = <STM32_PINMUX('F', 5, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_27: apollo_sdram_27 { pinmux = <STM32_PINMUX('F', 11, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_28: apollo_sdram_28 { pinmux = <STM32_PINMUX('F', 12, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_29: apollo_sdram_29 { pinmux = <STM32_PINMUX('F', 13, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_30: apollo_sdram_30 { pinmux = <STM32_PINMUX('F', 14, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_31: apollo_sdram_31 { pinmux = <STM32_PINMUX('F', 15, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_32: apollo_sdram_32 { pinmux = <STM32_PINMUX('G', 0, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_33: apollo_sdram_33 { pinmux = <STM32_PINMUX('G', 1, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_34: apollo_sdram_34 { pinmux = <STM32_PINMUX('G', 2, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_35: apollo_sdram_35 { pinmux = <STM32_PINMUX('G', 4, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_36: apollo_sdram_36 { pinmux = <STM32_PINMUX('G', 5, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_37: apollo_sdram_37 { pinmux = <STM32_PINMUX('G', 8, AF12)>; slew-rate = "very-high-speed"; };
+    apollo_sdram_38: apollo_sdram_38 { pinmux = <STM32_PINMUX('G', 15, AF12)>; slew-rate = "very-high-speed"; };
+};
+
+/* HSE 25MHz / 5 * 80 = 400MHz VCO. FMC kernel=200MHz; SDCLK=100MHz. */
+&pll2 {
+    clocks = <&clk_hse>;
+    div-m = <5>; mul-n = <80>; div-p = <2>; div-q = <2>; div-r = <2>;
+    status = "okay";
+};
+&pll3 {
+    clocks = <&clk_hse>;
+    div-m = <5>; mul-n = <80>; div-p = <2>; div-q = <2>; div-r = <10>;
+    status = "okay";
+};
+&fmc {
+    status = "okay";
+    pinctrl-0 = <&apollo_sdram_0 &apollo_sdram_1 &apollo_sdram_2 &apollo_sdram_3 &apollo_sdram_4 &apollo_sdram_5 &apollo_sdram_6 &apollo_sdram_7 &apollo_sdram_8 &apollo_sdram_9 &apollo_sdram_10 &apollo_sdram_11 &apollo_sdram_12 &apollo_sdram_13 &apollo_sdram_14 &apollo_sdram_15 &apollo_sdram_16 &apollo_sdram_17 &apollo_sdram_18 &apollo_sdram_19 &apollo_sdram_20 &apollo_sdram_21 &apollo_sdram_22 &apollo_sdram_23 &apollo_sdram_24 &apollo_sdram_25 &apollo_sdram_26 &apollo_sdram_27 &apollo_sdram_28 &apollo_sdram_29 &apollo_sdram_30 &apollo_sdram_31 &apollo_sdram_32 &apollo_sdram_33 &apollo_sdram_34 &apollo_sdram_35 &apollo_sdram_36 &apollo_sdram_37 &apollo_sdram_38>;
+    pinctrl-names = "default";
+    clocks = <&rcc STM32_CLOCK(AHB3, 12)>, <&rcc STM32_SRC_PLL2_R FMC_SEL(2)>;
+};
+&sdram {
+    status = "okay";
+    power-up-delay = <500>;
+    num-auto-refresh = <8>;
+    mode-register = <0x220>;
+    /* Conservative vendor count (shorter than 64ms/8192 at 100MHz). */
+    refresh-rate = <677>;
+    bank@0 {
+        reg = <0>;
+        st,sdram-control = <STM32_FMC_SDRAM_NC_9 STM32_FMC_SDRAM_NR_13
+            STM32_FMC_SDRAM_MWID_16 STM32_FMC_SDRAM_NB_4 STM32_FMC_SDRAM_CAS_2
+            STM32_FMC_SDRAM_SDCLK_PERIOD_2 STM32_FMC_SDRAM_RBURST_ENABLE
+            STM32_FMC_SDRAM_RPIPE_0>;
+        st,sdram-timing = <2 8 6 6 2 2 2>;
+    };
+};
+&ltdc {
+    status = "okay";
+    pinctrl-0 = <&apollo_lcd_0 &apollo_lcd_1 &apollo_lcd_2 &apollo_lcd_3 &apollo_lcd_4 &apollo_lcd_5 &apollo_lcd_6 &apollo_lcd_7 &apollo_lcd_8 &apollo_lcd_9 &apollo_lcd_10 &apollo_lcd_11 &apollo_lcd_12 &apollo_lcd_13 &apollo_lcd_14 &apollo_lcd_15 &apollo_lcd_16 &apollo_lcd_17 &apollo_lcd_18 &apollo_lcd_19>;
+    pinctrl-names = "default";
+    clocks = <&rcc STM32_CLOCK(APB3, 3)>, <&rcc STM32_SRC_PLL3_R NO_SEL>;
+    ext-sdram = <&sdram2>;
+    bl-ctrl-gpios = <&gpiob 5 GPIO_ACTIVE_HIGH>;
+    width = <1024>;
+    height = <600>;
+    /* LTDC output bus API requires RGB888; only R3:7/G2:7/B3:7 are wired. */
+    pixel-format = <PANEL_PIXEL_FORMAT_RGB_888>;
+    display-timings {
+        compatible = "zephyr,panel-timing";
+        hsync-len = <20>; hback-porch = <140>; hfront-porch = <160>;
+        vsync-len = <3>; vback-porch = <20>; vfront-porch = <12>;
+        hsync-active = <0>; vsync-active = <0>; de-active = <0>; pixelclk-active = <0>;
+    };
 };

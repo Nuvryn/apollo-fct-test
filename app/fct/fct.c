@@ -24,6 +24,7 @@ static const fct_case_t s_cases[] = {
     {{"can-loopback", "Classic CAN1 internal loopback, std/ext; no P10/transceiver test", false, 3000}, fct_run_can_loopback},
     {{"can-tx", "Use fct can tx <bitrate> <std|ext> <id> <hex|->; external ACK required", true, 7000}, fct_run_can_tx},
     {{"can-rx", "Use fct can rx <bitrate> <std|ext> <id> <wait_ms>; P10 and peer required", true, 7000}, fct_run_can_rx},
+    {{"lcd", "1024x600 RGB565 colors/grid; fct confirm pass|fail", true, 60000}, fct_run_lcd},
 };
 
 static osal_mutex_t s_lock;
@@ -140,7 +141,7 @@ int fct_wait_confirmation(const fct_context_t *context)
     s_waiting = true;
     s_confirmation = 0;
     fct_unlock();
-    fct_output("Observe LEDs: fct confirm pass|fail (or fct stop)");
+    fct_output("Observe hardware: fct confirm pass|fail (or fct stop)");
     do
     {
         result = fct_checkpoint(context);

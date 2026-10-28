@@ -6,11 +6,12 @@ if(ZEPHYR_FIRMWARE)
     find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
     project(apollo_fct_test LANGUAGES C)
     target_sources(app PRIVATE
-        app/main.c app/fct/fct.c app/fct/basic_tests.c app/fct/can_test.c app/fct/can_args.c app/fct/shell.c
+        app/main.c app/fct/fct.c app/fct/basic_tests.c app/fct/can_test.c app/fct/can_args.c app/fct/lcd_test.c app/fct/shell.c
         backends/osal/zephyr/osal_runtime.c
         backends/hal/zephyr/hal_gpio_runtime.c
         backends/hal/zephyr/hal_i2c_runtime.c
         backends/hal/zephyr/hal_can_runtime.c
+        backends/hal/zephyr/hal_display_runtime.c
         backends/support/zephyr/test_fixture.c
         backends/support/zephyr/lwip_platform.c
         backends/support/zephyr/lwip_stack.c)
@@ -53,7 +54,8 @@ add_library(apollo_hal STATIC
     backends/hal/${PLATFORM}/hal_adc.c
     backends/hal/${PLATFORM}/hal_pwm.c
     backends/hal/${PLATFORM}/hal_flash.c
-    backends/hal/${PLATFORM}/hal_rng.c)
+    backends/hal/${PLATFORM}/hal_rng.c
+    backends/hal/${PLATFORM}/hal_display.c)
 add_library(apollo_support STATIC
     backends/support/${PLATFORM}/network_stack_stub.c
     backends/support/${PLATFORM}/console.c

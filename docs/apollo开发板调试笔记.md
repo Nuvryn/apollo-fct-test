@@ -45,3 +45,14 @@
 - 新增 HAL 配置/启动/停止与 STOPPED/WARNING 状态；固定异步 TX/RX 上下文，IRQ 回调只更新静态事件，避免使用已经结束的测试栈。排队等待上限 1000ms，FCT 使用 20ms，防止无限排队阻塞停止。
 - 主机 FCT 测试覆盖载荷/格式错误、无 ACK/收包超时、取消、bus-off、队列/过滤器错误、清理失败及参数边界。独立编译实际 HAL 后端，以 Zephyr API shim 测试转换、异步完成、池耗尽回收、部分过滤器回滚及旧 token 拒绝。
 - 固件编译通过，尚未烧录实板。主机模拟不证明真实 IRQ 时序、内部回环、P10 跳线、电平、终端或外部对端通过。完整重编译可见上游 lwIP sockets.c 的条件编译 unused-function 警告，未修改上游源码。
+
+## 2026-10-28：RGB LCD 初步接入
+
+- 依据实验15与 hardware.md 配置 RGB565 引脚、1024×600 时序和 PB5 背光。
+- FMC 独立 200MHz 内核时钟，SDCLK100MHz；启用 MPU 正常 RAM 属性与外部 NOLOAD 帧缓存。
+- 保留厂家刷新计数677，记录其注释算术错误；此计数比64ms目标更保守。
+- 新增 `fct run lcd` 七幅图案、人工确认、停止/超时及背光清理。
+- 主机模拟不等于真实硬件结果；需接屏烧录检查颜色、时序、边框及稳定性。
+- 验证：真实 Zephyr 固件、Zephyr/Linux 骨架编译、CTest 4/4 通过。
+- 最终占用：Flash 130004B，内部 RAM 129840B，SDRAM 显存1228800B@0xC0000000；入口0x08000000。
+- 全部新增 AF12/AF14 引脚已与 STM32H743IITx pinctrl 核对；保留上游 lwIP sockets.c 原有 unused-function 警告。
