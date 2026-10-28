@@ -4,7 +4,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_testing()
 add_executable(fct_tests fct_tests.c ../app/fct/fct.c ../app/fct/basic_tests.c
-    ../app/fct/can_test.c ../app/fct/can_args.c ../app/fct/lcd_test.c)
+    ../app/fct/can_test.c ../app/fct/can_args.c ../app/fct/lcd_test.c ../app/fct/dma2d_test.c)
 target_include_directories(fct_tests PRIVATE .. ../app)
 target_compile_options(fct_tests PRIVATE -Wall -Wextra -Werror -Wpedantic)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
@@ -28,3 +28,8 @@ add_executable(can_backend_tests can_backend_tests.c ../backends/hal/zephyr/hal_
 target_include_directories(can_backend_tests PRIVATE can_shim ..)
 target_compile_options(can_backend_tests PRIVATE -Wall -Wextra -Werror -UNDEBUG)
 add_test(NAME can_backend_translation_and_lifecycle COMMAND can_backend_tests)
+
+add_executable(dma2d_backend_tests dma2d_backend_tests.c ../backends/hal/zephyr/hal_display_dma2d.c)
+target_include_directories(dma2d_backend_tests PRIVATE dma2d_shim ..)
+target_compile_options(dma2d_backend_tests PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+add_test(NAME dma2d_backend_registers_and_cache COMMAND dma2d_backend_tests)

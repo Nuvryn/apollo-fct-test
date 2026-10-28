@@ -41,6 +41,34 @@ int hal_display_write_row(uint16_t y, const uint16_t *pixels, uint16_t count)
     return s_display_write_error;
 }
 
+static uint16_t s_dma_frame[HAL_DISPLAY_HEIGHT][HAL_DISPLAY_WIDTH];
+static int s_dma_fill_error;
+static int s_dma_copy_error;
+static int s_dma_read_error;
+static bool s_dma_corrupt;
+int hal_display_dma2d_fill(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color)
+{
+    if (s_dma_fill_error != 0) { return s_dma_fill_error; }
+    for (unsigned int row = y; row < (unsigned int)y + height; row++)
+    {
+        for (unsigned int col = x; col < (unsigned int)x + width; col++) { s_dma_frame[row][col] = color; }
+    }
+    return 0;
+}
+int hal_display_dma2d_row(uint16_t y, const uint16_t *pixels, uint16_t count)
+{
+    if (s_dma_copy_error != 0) { return s_dma_copy_error; }
+    memcpy(s_dma_frame[y], pixels, count * sizeof(*pixels));
+    return 0;
+}
+int hal_display_read_row(uint16_t y, uint16_t *pixels, uint16_t count)
+{
+    if (s_dma_read_error != 0) { return s_dma_read_error; }
+    memcpy(pixels, s_dma_frame[y], count * sizeof(*pixels));
+    if (s_dma_corrupt) { pixels[0] ^= 1U; }
+    return 0;
+}
+
 static int s_network_result;
 
 int support_network_selftest(uint32_t timeout_ms)
@@ -575,6 +603,40 @@ int main(void)
     assert(fct_start("lcd") == 0 && fct_process_next(0) == 0);
     (void)test_result(8, FCT_FAIL);
     s_display_cleanup_error = 0;
+    assert(fct_start("dma2d") == 0 && fct_process_next(0) == 0);
+    (void)test_result(9, FCT_PASS);
+    assert(s_display_blank);
+    s_dma_corrupt = true;
+    assert(fct_start("dma2d") == 0 && fct_process_next(0) == 0);
+    (void)test_result(9, FCT_FAIL);
+    s_dma_corrupt = false;
+    s_dma_fill_error = -ETIMEDOUT;
+    assert(fct_start("dma2d") == 0 && fct_process_next(0) == 0);
+    (void)test_result(9, FCT_FAIL);
+    s_dma_fill_error = 0;
+    s_dma_copy_error = -EIO;
+    assert(fct_start("dma2d") == 0 && fct_process_next(0) == 0);
+    (void)test_result(9, FCT_FAIL);
+    s_dma_copy_error = 0;
+    s_dma_read_error = -EIO;
+    assert(fct_start("dma2d") == 0 && fct_process_next(0) == 0);
+    (void)test_result(9, FCT_FAIL);
+    s_dma_read_error = 0;
+    s_cancel_on_start = true;
+    assert(fct_start("dma2d") == 0 && fct_process_next(0) == 0);
+    (void)test_result(9, FCT_CANCELLED);
+    s_confirmation_mode = 1;
+    assert(fct_start("lcd-dma2d") == 0 && fct_process_next(0) == 0);
+    (void)test_result(10, FCT_PASS);
+    assert(s_display_blank);
+    for (unsigned int y = 0; y < HAL_DISPLAY_HEIGHT; y++)
+    {
+        for (unsigned int x = 0; x < HAL_DISPLAY_WIDTH; x++)
+        {
+            uint16_t expected = x % 64U == 0U || y % 60U == 0U || x == 1023U || y == 599U ? 0xffffU : 0;
+            assert(s_dma_frame[y][x] == expected);
+        }
+    }
     test_can_cases();
     puts("PASS: dispatch, failure isolation, confirmation, cancel, timeout, debounce, wrap, probe, lwip, CAN");
     return 0;

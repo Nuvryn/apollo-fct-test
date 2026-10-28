@@ -25,6 +25,8 @@ static const fct_case_t s_cases[] = {
     {{"can-tx", "Use fct can tx <bitrate> <std|ext> <id> <hex|->; external ACK required", true, 7000}, fct_run_can_tx},
     {{"can-rx", "Use fct can rx <bitrate> <std|ext> <id> <wait_ms>; P10 and peer required", true, 7000}, fct_run_can_rx},
     {{"lcd", "1024x600 RGB565 colors/grid; fct confirm pass|fail", true, 60000}, fct_run_lcd},
+    {{"dma2d", "DMA2D RGB565 fill/copy SDRAM readback; overwrites display, backlight off", false, 10000}, fct_run_dma2d},
+    {{"lcd-dma2d", "DMA2D LCD colors/grid; fct confirm pass|fail", true, 60000}, fct_run_lcd_dma2d},
 };
 
 static osal_mutex_t s_lock;

@@ -12,4 +12,13 @@
 int hal_display_ready(void);
 int hal_display_blanking(bool blank);
 int hal_display_write_row(uint16_t y, const uint16_t *pixels, uint16_t count);
+/* DMA2D operations, synchronous and bounded to 100ms per transfer.
+ * Rectangles must be nonempty and inside the panel. RGB565 colors use native
+ * 16-bit values. DMA row copy stages caller data in DMA-accessible SRAM.
+ * All display operations share the FCT worker ownership contract above.
+ */
+int hal_display_dma2d_fill(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color);
+int hal_display_dma2d_row(uint16_t y, const uint16_t *pixels, uint16_t count);
+/* CPU readback of one complete row, including DMA completion/cache visibility. */
+int hal_display_read_row(uint16_t y, uint16_t *pixels, uint16_t count);
 #endif

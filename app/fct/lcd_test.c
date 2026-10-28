@@ -7,8 +7,13 @@
 static uint16_t s_row[HAL_DISPLAY_WIDTH];
 static const uint16_t s_colors[] = {0xf800, 0x07e0, 0x001f, 0xffff, 0x0000};
 
-static int fct_lcd_pattern(fct_context_t *context, unsigned int pattern)
+static int fct_lcd_pattern(fct_context_t *context, unsigned int pattern, bool accelerated)
 {
+    if (accelerated && pattern < 5U)
+    {
+        int result = fct_checkpoint(context);
+        return result != 0 ? result : hal_display_dma2d_fill(0, 0, HAL_DISPLAY_WIDTH, HAL_DISPLAY_HEIGHT, s_colors[pattern]);
+    }
     for (uint16_t y = 0; y < HAL_DISPLAY_HEIGHT; y++)
     {
         int result = fct_checkpoint(context);
@@ -33,7 +38,7 @@ static int fct_lcd_pattern(fct_context_t *context, unsigned int pattern)
                 s_row[x] = line ? 0xffffU : 0x0000U;
             }
         }
-        result = hal_display_write_row(y, s_row, HAL_DISPLAY_WIDTH);
+        result = accelerated ? hal_display_dma2d_row(y, s_row, HAL_DISPLAY_WIDTH) : hal_display_write_row(y, s_row, HAL_DISPLAY_WIDTH);
         if (result != 0)
         {
             return result;
@@ -42,7 +47,7 @@ static int fct_lcd_pattern(fct_context_t *context, unsigned int pattern)
     return 0;
 }
 
-int fct_run_lcd(fct_context_t *context)
+static int fct_lcd_run(fct_context_t *context, bool accelerated)
 {
     static const char *const names[] = {"red", "green", "blue", "white", "black", "color bars", "grid"};
     int result = hal_display_ready();
@@ -53,7 +58,7 @@ int fct_run_lcd(fct_context_t *context)
     result = hal_display_blanking(true);
     for (unsigned int pattern = 0; result == 0 && pattern < 7U; pattern++)
     {
-        result = fct_lcd_pattern(context, pattern);
+        result = fct_lcd_pattern(context, pattern, accelerated);
         if (result == 0)
         {
             result = hal_display_blanking(false);
@@ -78,6 +83,15 @@ int fct_run_lcd(fct_context_t *context)
             result = cleanup;
         }
     }
-    (void) snprintf(context->reason, sizeof(context->reason), "LCD colors/grid confirmed by operator");
+    (void) snprintf(context->reason, sizeof(context->reason), "%s colors/grid confirmed by operator", accelerated ? "DMA2D LCD" : "CPU LCD");
     return result;
+}
+
+int fct_run_lcd(fct_context_t *context)
+{
+    return fct_lcd_run(context, false);
+}
+int fct_run_lcd_dma2d(fct_context_t *context)
+{
+    return fct_lcd_run(context, true);
 }

@@ -94,3 +94,5 @@ ctest --test-dir build-tests --output-on-failure
 固件、两平台骨架分别按 README 构建。检查生成设备树、ELF 起始地址和编译数据库。尚未进行烧录、串口交互、真实队列超时及 I2C 波形验证。
 
 LCD 人工测试：`fct run lcd`，自动批次跳过；详见 [LCD 测试](lcd-tests.md)。
+
+DMA2D：`dma2d` 自动填充/复制并CPU全屏读回，覆盖显存且背光关闭；`lcd-dma2d` 为人工图案测试。

@@ -56,3 +56,12 @@
 - 验证：真实 Zephyr 固件、Zephyr/Linux 骨架编译、CTest 4/4 通过。
 - 最终占用：Flash 130004B，内部 RAM 129840B，SDRAM 显存1228800B@0xC0000000；入口0x08000000。
 - 全部新增 AF12/AF14 引脚已与 STM32H743IITx pinctrl 核对；保留上游 lwIP sockets.c 原有 unused-function 警告。
+
+## 2026-10-28：DMA2D 接入与测试
+
+- 新增RGB565 R2M填充、M2M行复制和CPU行读回HAL接口；Zephyr后端直接操作CMSIS寄存器。
+- 使用32字节对齐AXI SRAM源暂存，显存整行clean/invalidate，避免DTCM源和缓存一致性问题。
+- 每次传输100ms上限，检查TC/TE/CE，所有传输结束后复位，支持错误后再次使用。
+- `dma2d` 自动验证全屏填充、非对齐矩形跨度及M2M数据；`lcd-dma2d` 人工显示图案。
+- 真实固件编译、Zephyr/Linux骨架与CTest 5/5通过；Flash131480B，RAM136200B，SDRAM1228800B。
+- 新增寄存器与cache主机shim验证，但尚未实板测试，不能宣称硬件DMA或点屏成功。

@@ -6,12 +6,13 @@ if(ZEPHYR_FIRMWARE)
     find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
     project(apollo_fct_test LANGUAGES C)
     target_sources(app PRIVATE
-        app/main.c app/fct/fct.c app/fct/basic_tests.c app/fct/can_test.c app/fct/can_args.c app/fct/lcd_test.c app/fct/shell.c
+        app/main.c app/fct/fct.c app/fct/basic_tests.c app/fct/can_test.c app/fct/can_args.c app/fct/lcd_test.c app/fct/dma2d_test.c app/fct/shell.c
         backends/osal/zephyr/osal_runtime.c
         backends/hal/zephyr/hal_gpio_runtime.c
         backends/hal/zephyr/hal_i2c_runtime.c
         backends/hal/zephyr/hal_can_runtime.c
         backends/hal/zephyr/hal_display_runtime.c
+        backends/hal/zephyr/hal_display_dma2d.c
         backends/support/zephyr/test_fixture.c
         backends/support/zephyr/lwip_platform.c
         backends/support/zephyr/lwip_stack.c)
