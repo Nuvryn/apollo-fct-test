@@ -15,8 +15,10 @@ if(ZEPHYR_FIRMWARE)
         backends/hal/zephyr/hal_display_dma2d.c
         backends/support/zephyr/test_fixture.c
         backends/support/zephyr/lwip_platform.c
-        backends/support/zephyr/lwip_stack.c)
+        backends/support/zephyr/lwip_stack.c
+        backends/support/zephyr/tls_stack.c)
     add_subdirectory(third_party/lwip)
+    add_subdirectory(third_party/mbedtls)
     target_link_libraries(app PRIVATE apollo_lwip)
     target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/app)
     target_compile_options(app PRIVATE -Wall -Wextra)
@@ -59,6 +61,7 @@ add_library(apollo_hal STATIC
     backends/hal/${PLATFORM}/hal_display.c)
 add_library(apollo_support STATIC
     backends/support/${PLATFORM}/network_stack_stub.c
+    backends/support/${PLATFORM}/tls_stack_stub.c
     backends/support/${PLATFORM}/console.c
     backends/support/${PLATFORM}/args.c
     backends/support/${PLATFORM}/config_source.c

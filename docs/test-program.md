@@ -96,3 +96,5 @@ ctest --test-dir build-tests --output-on-failure
 LCD 人工测试：`fct run lcd`，自动批次跳过；详见 [LCD 测试](lcd-tests.md)。
 
 DMA2D：`dma2d` 自动填充/复制并CPU全屏读回，覆盖显存且背光关闭；`lcd-dma2d` 为人工图案测试。
+
+TLS库自检：`fct run tls`，版本、SHA256、RNG及客户端上下文；尚无网络握手。

@@ -17,6 +17,7 @@ void fct_output(const char *format, ...);
 int fct_checkpoint(const fct_context_t *context);
 int fct_sleep(const fct_context_t *context, uint32_t delay_ms);
 int fct_wait_confirmation(const fct_context_t *context);
+int fct_run_tls(fct_context_t *context);
 int fct_run_dma2d(fct_context_t *context);
 int fct_run_lcd_dma2d(fct_context_t *context);
 int fct_run_lcd(fct_context_t *context);

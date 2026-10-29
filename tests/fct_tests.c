@@ -69,6 +69,8 @@ int hal_display_read_row(uint16_t y, uint16_t *pixels, uint16_t count)
     return 0;
 }
 
+static int s_tls_result;
+int support_tls_selftest(void) { return s_tls_result; }
 static int s_network_result;
 
 int support_network_selftest(uint32_t timeout_ms)
@@ -637,6 +639,11 @@ int main(void)
             assert(s_dma_frame[y][x] == expected);
         }
     }
+    assert(fct_start("tls") == 0 && fct_process_next(0) == 0);
+    (void)test_result(11, FCT_PASS);
+    s_tls_result = -EIO;
+    assert(fct_start("tls") == 0 && fct_process_next(0) == 0);
+    (void)test_result(11, FCT_FAIL);
     test_can_cases();
     puts("PASS: dispatch, failure isolation, confirmation, cancel, timeout, debounce, wrap, probe, lwip, CAN");
     return 0;

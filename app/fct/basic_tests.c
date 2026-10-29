@@ -7,6 +7,7 @@
 #include "osal/osal.h"
 #include "support/test_fixture.h"
 #include "support/network_stack.h"
+#include "support/tls_stack.h"
 
 static int fct_led_level(const support_test_pin_t *pin, bool on)
 {
@@ -207,5 +208,16 @@ int fct_run_lwip(fct_context_t *context)
     }
     (void) snprintf(context->reason, sizeof(context->reason),
         "lwIP UDP/IPv4 127.0.0.1 payload verified; MAC/PHY/cable untested");
+    return result;
+}
+
+int fct_run_tls(fct_context_t *context)
+{
+    int result = fct_checkpoint(context);
+    if (result == 0)
+    {
+        result = support_tls_selftest();
+    }
+    (void) snprintf(context->reason, sizeof(context->reason), "Mbed TLS 3.6.6 SHA256/RNG/client setup; no handshake");
     return result;
 }

@@ -65,3 +65,12 @@
 - `dma2d` 自动验证全屏填充、非对齐矩形跨度及M2M数据；`lcd-dma2d` 人工显示图案。
 - 真实固件编译、Zephyr/Linux骨架与CTest 5/5通过；Flash131480B，RAM136200B，SDRAM1228800B。
 - 新增寄存器与cache主机shim验证，但尚未实板测试，不能宣称硬件DMA或点屏成功。
+
+## 2026-10-29：Mbed TLS 3.6.6 加入编译
+
+- 原生Zephyr模块适配4.x，故单独构建west的mbedtls-3.6，禁止同时开启原生Mbed TLS/PSA。
+- 客户端编译TLS1.2/1.3，接入硬件熵源、k_calloc/k_free与单调毫秒时钟，保留证书时间验证。
+- 上游CMake会建立MBEDTLS_CONFIG_FILE缓存，需显式设置缓存以确保专用配置生效。
+- `fct run tls` 检查版本、SHA256、DRBG及SSL上下文创建，无网络握手。
+- 堆改为96KiB，保留16KiB收发缓冲区；主机真实库测试覆盖失败清理和重试，CTest6/6通过。
+- 固件Flash158704B/RAM204960B，显存不变；尚未实板运行，未验证服务器连接。

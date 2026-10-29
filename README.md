@@ -76,3 +76,5 @@ ctest --test-dir build-tests --output-on-failure
 RGB LCD（7 寸 1024×600）：`fct run lcd`，详见 [LCD 测试](docs/lcd-tests.md)。
 
 DMA2D：`fct run dma2d` 自动读回校验，`fct run lcd-dma2d` 显示图案并人工确认，详见 [LCD 测试](docs/lcd-tests.md)。
+
+Mbed TLS 3.6.6：`fct run tls` 验证库初始化，详见 [TLS 集成](docs/tls-integration.md)。

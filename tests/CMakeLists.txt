@@ -33,3 +33,5 @@ add_executable(dma2d_backend_tests dma2d_backend_tests.c ../backends/hal/zephyr/
 target_include_directories(dma2d_backend_tests PRIVATE dma2d_shim ..)
 target_compile_options(dma2d_backend_tests PRIVATE -Wall -Wextra -Werror -UNDEBUG)
 add_test(NAME dma2d_backend_registers_and_cache COMMAND dma2d_backend_tests)
+
+add_subdirectory(tls36)
