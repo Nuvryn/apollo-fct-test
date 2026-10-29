@@ -218,6 +218,6 @@ int fct_run_tls(fct_context_t *context)
     {
         result = support_tls_selftest();
     }
-    (void) snprintf(context->reason, sizeof(context->reason), "Mbed TLS 3.6.6 SHA256/RNG/client setup; no handshake");
+    (void) snprintf(context->reason, sizeof(context->reason), "Native Mbed TLS SHA256/PSA RNG/client setup; no handshake");
     return result;
 }

@@ -3,6 +3,10 @@ option(ZEPHYR_FIRMWARE "Build real Zephyr firmware instead of skeleton libraries
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(ZEPHYR_FIRMWARE)
     set(BOARD apollo_stm32h743 CACHE STRING "Zephyr board")
+    # Discard the config cached by the retired standalone 3.6 build.
+    if(MBEDTLS_CONFIG_FILE MATCHES "apollo_mbedtls_config[.]h$")
+        unset(MBEDTLS_CONFIG_FILE CACHE)
+    endif()
     find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
     project(apollo_fct_test LANGUAGES C)
     target_sources(app PRIVATE
@@ -18,7 +22,6 @@ if(ZEPHYR_FIRMWARE)
         backends/support/zephyr/lwip_stack.c
         backends/support/zephyr/tls_stack.c)
     add_subdirectory(third_party/lwip)
-    add_subdirectory(third_party/mbedtls)
     target_link_libraries(app PRIVATE apollo_lwip)
     target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/app)
     target_compile_options(app PRIVATE -Wall -Wextra)
